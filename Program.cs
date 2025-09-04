@@ -21,12 +21,10 @@ var app = builder.Build();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwagger();            // สร้าง JSON สำหรับ Swagger
-    app.UseSwaggerUI();   // Swagger/OpenAPI
-}
+
+app.MapOpenApi();
+app.UseSwagger();            // สร้าง JSON สำหรับ Swagger
+app.UseSwaggerUI();   // Swagger/OpenAPI
 
 // Minimal API
 app.MapGet("/", () => "Hello from Lotto API!");
