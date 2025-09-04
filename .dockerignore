@@ -1,0 +1,9 @@
+bin/
+obj/
+*.md
+*.user
+*.suo
+*.vs/
+*.vscode/
+docker-compose.override.yml
+appsettings.Development.json

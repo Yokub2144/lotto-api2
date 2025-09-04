@@ -1,0 +1,60 @@
+
+services:
+  traefik:
+    image: traefik:v2.11.15
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.le.acme.email=suwat.paomongkon@gmail.com"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - traefik_cert:/letsencrypt
+    networks:
+      - backend
+
+  db:
+    image: mysql:8.1
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: xbFykouJXTCh
+      MYSQL_DATABASE: mb68_66011212144
+      MYSQL_USER: mb68_66011212144
+      MYSQL_PASSWORD: xbFykouJXTCh
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+
+  lottoapi:
+    build: .
+    restart: always
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=202.28.34.203;Port=3306;Database=mb68_66011212144;User=mb68_66011212144;Password=xbFykouJXTCh;"
+      DOTNET_ENVIRONMENT: "Production"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.lottoapi.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.lottoapi.entrypoints=websecure"
+      - "traefik.http.routers.lottoapi.tls.certresolver=le"
+      - "traefik.http.services.lottoapi.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.strip-api.stripprefix.prefixes=/api"
+      - "traefik.http.routers.lottoapi.middlewares=strip-api"
+    depends_on:
+      - db
+    networks:
+      - backend
+
+volumes:
+  traefik_cert:
+  db_data:
+
+networks:
+  backend:
