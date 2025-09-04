@@ -24,6 +24,19 @@ namespace LottoApi.Data
                 entity.Property(e => e.phone).HasColumnName("phone");
                 entity.Property(e => e.role).HasColumnName("role");
             });
+            modelBuilder.Entity<Lottery>(entity =>
+                {
+                  
+                    entity.ToTable("Lottery");
+                    entity.HasKey(e => e.lid);      
+                    entity.Property(e => e.lid).HasColumnName("lid");
+                    entity.Property(e => e.uid).HasColumnName("uid");
+                    entity.Property(e => e.price).HasColumnName("price");
+                    entity.Property(e => e.number).HasColumnName("number");
+                    entity.Property(e => e.start_date).HasColumnName("start_date");
+                    entity.Property(e => e.end_date).HasColumnName("end_date");
+                    entity.Property(e => e.status).HasColumnName("status");
+                });
         }
     }
 }
