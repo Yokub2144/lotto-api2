@@ -1,5 +1,5 @@
 using LottoApi.Data;
-using LottoApi.Models.req_res;
+using LottoApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +16,11 @@ namespace LottoApi.Controllers
             _db = db;
         }
 
-        [HttpPost("lotto")]
-        public async Task<IActionResult> Lotto(Lotto_Respon respon)
+        [HttpGet("lotto")]
+        public async Task<IActionResult> Lotto() // Removed 'respon' parameter
         {
-            return await _db.Lotto.ToListAsync();
+            var lottoData = await _db.Lotto.ToListAsync();
+            return Ok(lottoData);
         }
     }
 }
