@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LottoApi.Models
 {
-    public class Lotto
+    public class Lottery
     {
         [Key]
         public int lid { get; set; }

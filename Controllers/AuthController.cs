@@ -1,7 +1,8 @@
 using LottoApi.Data;
-using LottoApi.Models;
+using LottoApi.Models.req_res;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LottoApi.Models;
 
 namespace LottoApi.Controllers
 {
