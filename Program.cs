@@ -13,7 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
 
 if (app.Environment.IsDevelopment())
@@ -22,10 +22,11 @@ if (app.Environment.IsDevelopment())
 }
 
 // Minimal API
+app.MapGet("/", () => "Hello from Lotto API!");
 app.MapGet("/lotto", () => "Hello Lotto!");
 app.MapGet("/User", async (AppDbContext db) =>
 {
     return await db.User.ToListAsync();
 });
 
-app.Run("http://0.0.0.0:8080");
+app.Run();

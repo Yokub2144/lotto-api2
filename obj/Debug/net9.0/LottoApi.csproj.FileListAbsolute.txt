@@ -162,3 +162,4 @@ C:\LottoApi\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Security.Cryptograph
 C:\LottoApi\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 C:\LottoApi\bin\Debug\net9.0\MySqlConnector.dll
 C:\LottoApi\bin\Debug\net9.0\Pomelo.EntityFrameworkCore.MySql.dll
+C:\LottoApi\obj\Debug\net9.0\LottoApi.sourcelink.json
