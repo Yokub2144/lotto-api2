@@ -163,3 +163,6 @@ C:\LottoApi\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.d
 C:\LottoApi\bin\Debug\net9.0\MySqlConnector.dll
 C:\LottoApi\bin\Debug\net9.0\Pomelo.EntityFrameworkCore.MySql.dll
 C:\LottoApi\obj\Debug\net9.0\LottoApi.sourcelink.json
+C:\LottoApi\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\LottoApi\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\LottoApi\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll

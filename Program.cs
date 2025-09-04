@@ -11,6 +11,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
+// เพิ่ม Controllers ก่อน Build
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
@@ -18,7 +23,9 @@ app.Urls.Add($"http://*:{port}");
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi(); // Swagger/OpenAPI
+    app.MapOpenApi();
+    app.UseSwagger();            // สร้าง JSON สำหรับ Swagger
+    app.UseSwaggerUI();   // Swagger/OpenAPI
 }
 
 // Minimal API
@@ -28,5 +35,8 @@ app.MapGet("/User", async (AppDbContext db) =>
 {
     return await db.User.ToListAsync();
 });
+
+// Map controller endpoints (ถ้าใช้ controller)
+app.MapControllers();
 
 app.Run();
