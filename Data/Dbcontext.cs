@@ -8,7 +8,11 @@ namespace LottoApi.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<User> User { get; set; }
+<<<<<<< HEAD
         public DbSet<Lottery> Lottery { get; set; }
+=======
+        public DbSet<Lotto> Lotto { get; set; }
+>>>>>>> a4a747eb437697884370d7ac9cb5e535db52c3ca
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,7 +29,7 @@ namespace LottoApi.Data
                 entity.Property(e => e.phone).HasColumnName("phone");
                 entity.Property(e => e.role).HasColumnName("role");
             });
-            modelBuilder.Entity<Lottery>(entity =>
+            modelBuilder.Entity<Lotto>(entity =>
                 {
 
                     entity.ToTable("Lottery");
