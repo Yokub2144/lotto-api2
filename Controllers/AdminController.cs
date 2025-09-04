@@ -16,7 +16,7 @@ namespace LottoApi.Controllers
             _db = db;
         }
 
-        [HttpPost("lotto")]
+        [HttpGet("lotto")]
         public async Task<IActionResult> Lotto(lotto_Respon respon)
         {
             List<Lottery> lotteries = await _db.Lottery.ToListAsync();
