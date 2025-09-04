@@ -19,7 +19,7 @@ namespace LottoApi.Controllers
         [HttpPost("lotto")]
         public async Task<IActionResult> Lotto(lotto_Respon respon)
         {
-            List<Lottery> lotteries = _db.Lottery.ToList();
+            List<Lottery> lotteries = await _db.Lottery.ToListAsync();
             return Ok(lotteries);
         }
     }
