@@ -33,7 +33,7 @@ app.MapGet("/User", async (AppDbContext db) =>
 {
     return await db.User.ToListAsync();
 });
-app.MapGet("/kuy", () => "hello kuy");
+
 app.MapGet("/admin",()=>"aSDasdasd");
 
 // Map controller endpoints (ถ้าใช้ controller)
