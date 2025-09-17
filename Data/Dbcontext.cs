@@ -9,6 +9,7 @@ namespace LottoApi.Data
 
         public DbSet<User> User { get; set; }
         public DbSet<Lottery> Lottery { get; set; }
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
