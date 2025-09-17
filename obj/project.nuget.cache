@@ -1,6 +1,10 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "39gaQ5IzX8g=",
+=======
+  "dgSpecHash": "yt76tL5OQbo=",
+>>>>>>> 0239f423d20f20b48e6d5817f8a767e9c5cbce1b
   "success": true,
   "projectFilePath": "C:\\xampp\\htdocs\\Project\\lotto-api\\LottoApi.csproj",
   "expectedPackageFiles": [
