@@ -9,7 +9,7 @@ namespace LottoApi.Data
 
         public DbSet<User> User { get; set; }
         public DbSet<Lottery> Lottery { get; set; }
-       
+        public DbSet<Reward> Reward { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +39,14 @@ namespace LottoApi.Data
                     entity.Property(e => e.end_date).HasColumnName("end_date");
                     entity.Property(e => e.status).HasColumnName("status");
                 });
+              modelBuilder.Entity<Reward>(entity =>
+            {
+                entity.ToTable("reward");
+                entity.HasKey(e => e.Rid);
+                entity.Property(e => e.Rid).HasColumnName("rid");
+                entity.Property(e => e.Lid).HasColumnName("lid");
+                entity.Property(e => e.Rank).HasColumnName("rank");
+            });
         }
     }
 }
