@@ -13,7 +13,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LottoApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+<<<<<<< HEAD
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7a96eb6434595bb0a27775535e9d57a142aed427")]
+=======
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+561d922bd3c2fa376ec09192402f4373ad13ef2b")]
+>>>>>>> a5fde5fbfcd9b2320c540c6c49a8ed2098adb5cc
 [assembly: System.Reflection.AssemblyProductAttribute("LottoApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LottoApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
