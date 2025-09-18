@@ -1,13 +1,13 @@
 namespace LottoApi.Models.req_res
 {
-    public record lotto_Respon
+    public record lotto_Res
     (
         int lid,
         int uid,
-        float price,
-        int number,
-        DateTime start_date, // Use DateTime instead of date
-        DateTime end_date,   // Use DateTime instead of date
+        decimal price,        // float -> decimal
+        string number,        // int -> string
+        DateOnly start_date,  // DateTime -> DateOnly
+        DateOnly end_date,
         string status
     );
 }
