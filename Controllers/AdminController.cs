@@ -171,5 +171,32 @@ namespace LottoApi.Controllers
 
                 return Ok(new { message = $"บันทึกรางวัลที่ 5 (เลขท้าย 2 ตัว: {request.Number}) สำเร็จ" });
             }
+          [HttpGet("showrank")]
+public async Task<IActionResult> ShowRank()
+{
+    var winningLotteries = await _db.Lottery
+        .Join(
+            _db.Reward,
+            lottery => lottery.lid, 
+            reward => reward.Lid,    
+            (lottery, reward) => new Lotteryreward
+            {
+                lid = lottery.lid,
+                number = lottery.number,
+                rank = reward.Rank
+            }
+        )
+        // เปลี่ยน r.Rank เป็น r.rank
+        .Where(r => r.rank != null)
+        .ToListAsync();
+
+    if (!winningLotteries.Any())
+    {
+        return NotFound("No winning lotteries found.");
     }
+
+    return Ok(winningLotteries);
+}
+        
+                }
 }
