@@ -19,4 +19,15 @@ namespace LottoApi.Models
 
         public string? status { get; set; }
     }
+
+    public class BuyLottery
+    {
+        [Key]
+        public int buyid { get; set; }
+
+        public int uid { get; set; }
+
+        public int lid { get; set; }
+
+    }
 }

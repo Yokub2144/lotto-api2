@@ -13,6 +13,8 @@ namespace LottoApi.Data
 
         public DbSet<Wallet> Wallet { get; set; }
 
+        public DbSet<BuyLottery> BuyLottery { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -61,6 +63,14 @@ namespace LottoApi.Data
             .HasMaxLength(50)
             .IsRequired(false);
            });
+            modelBuilder.Entity<BuyLottery>(entity =>
+    {
+        entity.ToTable("buylottery");
+        entity.HasKey(e => e.buyid);
+        entity.Property(e => e.buyid).HasColumnName("buyid");
+        entity.Property(e => e.uid).HasColumnName("uid");
+        entity.Property(e => e.lid).HasColumnName("lid");
+    });
         }
     }
 }
