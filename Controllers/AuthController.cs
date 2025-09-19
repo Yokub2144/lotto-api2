@@ -53,15 +53,28 @@ namespace LottoApi.Controllers
                 role = "user"
             };
 
+            using var tx = await _db.Database.BeginTransactionAsync();
             _db.User.Add(user);
             await _db.SaveChangesAsync();
+
+             var wallet = new Wallet
+        {
+            uid = user.uid,
+            money = 0m,
+            account_id = null
+        };
+        _db.Wallet.Add(wallet);
+        await _db.SaveChangesAsync();   
+            await tx.CommitAsync();
+
 
             return Ok(new
             {
                 message = "สมัครสมาชิกสำเร็จ",
                 uid = user.uid,
                 email = user.email,
-                fullname = user.fullname
+                fullname = user.fullname,
+                role = user.role
             });
         }
     }

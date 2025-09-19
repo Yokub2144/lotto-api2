@@ -11,6 +11,8 @@ namespace LottoApi.Data
         public DbSet<Lottery> Lottery { get; set; }
         public DbSet<Reward> Reward { get; set; }
 
+        public DbSet<Wallet> Wallet { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -39,14 +41,26 @@ namespace LottoApi.Data
                     entity.Property(e => e.end_date).HasColumnName("end_date");
                     entity.Property(e => e.status).HasColumnName("status");
                 });
-              modelBuilder.Entity<Reward>(entity =>
-            {
-                entity.ToTable("reward");
-                entity.HasKey(e => e.Rid);
-                entity.Property(e => e.Rid).HasColumnName("rid");
-                entity.Property(e => e.Lid).HasColumnName("lid");
-                entity.Property(e => e.Rank).HasColumnName("rank");
-            });
+            modelBuilder.Entity<Reward>(entity =>
+          {
+              entity.ToTable("reward");
+              entity.HasKey(e => e.Rid);
+              entity.Property(e => e.Rid).HasColumnName("rid");
+              entity.Property(e => e.Lid).HasColumnName("lid");
+              entity.Property(e => e.Rank).HasColumnName("rank");
+          });
+            modelBuilder.Entity<Wallet>(entity =>
+           {
+               entity.ToTable("wallet");
+               entity.HasKey(e => e.wid);
+               entity.Property(e => e.wid).HasColumnName("wid");
+               entity.Property(e => e.uid).HasColumnName("uid");
+               entity.Property(e => e.money).HasColumnName("money");
+               entity.Property(e => e.account_id)
+            .HasColumnName("account_id")
+            .HasMaxLength(50)
+            .IsRequired(false);
+           });
         }
     }
 }

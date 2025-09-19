@@ -16,7 +16,7 @@ namespace LottoApi.Controllers
             _db = db;
         }
 
-        [HttpGet("userById")]
+        [HttpGet("user_uid")]
         public async Task<IActionResult> getUserById(int id)
         {
             var User = await _db.User.FirstOrDefaultAsync(u => u.uid == id);
