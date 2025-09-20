@@ -32,4 +32,17 @@ namespace LottoApi.Models
 
 
     }
+
+    public static class RewardHelper
+{
+    public static int PrizeByRank(string rank) => rank switch
+    {
+        "1" => 1000,
+        "2" => 500,
+        "3" => 300,
+        "4" => 200,
+        "5" => 100,
+        _ => 0
+    };
+}
 }
