@@ -20,14 +20,16 @@ namespace LottoApi.Models
         public string? status { get; set; }
     }
 
-    public class BuyLottery
+    public class Order
     {
         [Key]
-        public int buyid { get; set; }
-
+        public int oid { get; set; }
         public int uid { get; set; }
-
         public int lid { get; set; }
+        public DateTime date { get; set; } = DateTime.Now; // ค่า default วันที่ซื้อ
+        public int amount { get; set; } = 1; // ค่า default = 1
+        public string statusbonus { get; set; } = "ยังไม่ขึ้นรางวัล"; // ค่า default
+
 
     }
 }

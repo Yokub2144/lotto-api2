@@ -13,7 +13,7 @@ namespace LottoApi.Data
 
         public DbSet<Wallet> Wallet { get; set; }
 
-        public DbSet<BuyLottery> BuyLottery { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,14 +63,39 @@ namespace LottoApi.Data
             .HasMaxLength(50)
             .IsRequired(false);
            });
-            modelBuilder.Entity<BuyLottery>(entity =>
-    {
-        entity.ToTable("buylottery");
-        entity.HasKey(e => e.buyid);
-        entity.Property(e => e.buyid).HasColumnName("buyid");
-        entity.Property(e => e.uid).HasColumnName("uid");
-        entity.Property(e => e.lid).HasColumnName("lid");
-    });
+            modelBuilder.Entity<Order>(entity =>
+{
+    entity.ToTable("Orders");        // ชื่อตารางจริงใน database
+    entity.HasKey(e => e.oid);           // primary key
+
+    entity.Property(e => e.oid)
+        .HasColumnName("oid")
+        .ValueGeneratedOnAdd();           // AUTO_INCREMENT
+
+    entity.Property(e => e.uid)
+        .HasColumnName("uid")
+        .IsRequired();
+
+    entity.Property(e => e.lid)
+        .HasColumnName("lid")
+        .IsRequired();
+
+    entity.Property(e => e.date)
+        .HasColumnName("date")
+        .IsRequired();
+
+    entity.Property(e => e.amount)
+        .HasColumnName("amount")
+        .HasDefaultValue(1)               // default = 1
+        .IsRequired();
+
+    entity.Property(e => e.statusbonus)
+        .HasColumnName("statusbonus")
+        .HasMaxLength(50)
+        .HasDefaultValue("ยังไม่ขึ้นรางวัล")
+        .IsRequired();
+});
+
         }
     }
 }
