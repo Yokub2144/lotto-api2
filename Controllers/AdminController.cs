@@ -195,32 +195,57 @@ namespace LottoApi.Controllers
                 return StatusCode(500, new { message = "An error occurred while clearing data.", error = ex.Message });
             }
         }
-          [HttpGet("showrank")]
-public async Task<IActionResult> ShowRank()
-{
-    var winningLotteries = await _db.Lottery
-        .Join(
-            _db.Reward,
-            lottery => lottery.lid, 
-            reward => reward.Lid,    
-            (lottery, reward) => new Lotteryreward
-            {
-                lid = lottery.lid,
-                number = lottery.number,
-                rank = reward.Rank
-            }
-        )
-        // เปลี่ยน r.Rank เป็น r.rank
-        .Where(r => r.rank != null)
-        .ToListAsync();
+        [HttpGet("showrank")]
+        public async Task<IActionResult> ShowRank()
+        {
+                var winningLotteries = await _db.Lottery
+                    .Join(
+                        _db.Reward,
+                        lottery => lottery.lid, 
+                        reward => reward.Lid,    
+                        (lottery, reward) => new Lotteryreward
+                        {
+                            lid = lottery.lid,
+                            number = lottery.number,
+                            rank = reward.Rank
+                        }
+                    )
+                    // เปลี่ยน r.Rank เป็น r.rank
+                    .Where(r => r.rank != null)
+                    .ToListAsync();
 
-    if (!winningLotteries.Any())
-    {
-        return NotFound("No winning lotteries found.");
-    }
-
-    return Ok(winningLotteries);
-}
-        
+                if (!winningLotteries.Any())
+                {
+                    return NotFound("No winning lotteries found.");
                 }
+
+                return Ok(winningLotteries);
+            }
+        [HttpGet("reward-lotto")]
+        public async Task<IActionResult> GetRewardWithLotto()
+        {
+            var data = await (from r in _db.Reward
+                              join l in _db.Lottery on r.Lid equals l.lid
+                              select new
+                              {
+                                  r.Rid,
+                                  r.Rank,
+                                  l.lid,
+                                  l.uid,
+                                  l.price,
+                                  l.number,
+                                  l.start_date,
+                                  l.end_date,
+                                  l.status
+                              }).ToListAsync();
+
+            if (!data.Any())
+            {
+                return NotFound("No rewards with lottery found.");
+            }
+
+            return Ok(data);
+        }
+                }
+
 }
