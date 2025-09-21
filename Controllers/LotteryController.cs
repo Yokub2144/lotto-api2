@@ -135,8 +135,8 @@ public async Task<IActionResult> CheckReward(int uid)
     var candidateOrders = await _db.Orders
         .AsNoTracking()
         .Where(o => o.uid == uid &&
-            (o.statusbonus == "ยังไม่ขึ้นรางวัล"
-             || o.statusbonus.Contains("(รอรับเงิน)"))) // เผื่อมีข้อความ "ถูกรางวัล ... (รอรับเงิน)"
+               (o.statusbonus == "ยังไม่ขึ้นรางวัล"
+             || o.statusbonus.Contains("(รอรับเงิน)")))
         .OrderByDescending(o => o.date)
         .ToListAsync();
 
@@ -146,7 +146,8 @@ public async Task<IActionResult> CheckReward(int uid)
         {
             message = "ไม่มีออเดอร์ที่รอผลหรือรอรับเงิน",
             winnersPending = Array.Empty<object>(),
-            stillNotAnnounced = Array.Empty<object>()
+            stillNotAnnounced = Array.Empty<object>(),
+            time = DateTime.Now
         });
     }
 
@@ -154,14 +155,15 @@ public async Task<IActionResult> CheckReward(int uid)
     var notMarked = candidateOrders.Where(o => o.statusbonus == "ยังไม่ขึ้นรางวัล").ToList();
     var winnersAlreadyPending = candidateOrders.Where(o => o.statusbonus.Contains("(รอรับเงิน)")).ToList();
 
-    // 2) โหลด reward เฉพาะ lid ที่เกี่ยวข้องกับ "ยังไม่ขึ้นรางวัล"
-    var lids = notMarked.Select(o => o.lid).Distinct().ToList();
+    // 2) โหลด reward เฉพาะ lid ที่เกี่ยวข้อง (ทั้งสองกลุ่ม)
+    var lidsAll = candidateOrders.Select(o => o.lid).Distinct().ToList();
+
     var rewards = await _db.Reward
         .AsNoTracking()
-        .Where(r => lids.Contains(r.Lid))
+        .Where(r => lidsAll.Contains(r.Lid))
         .ToListAsync();
 
-    // ถ้า 1 lid มีหลาย rank เลือกอันดับดีที่สุด
+    // กรณี 1 lid มีหลาย rank → เลือก "อันดับดีที่สุด" ต่อ lid
     var bestRewardByLid = rewards
         .GroupBy(r => r.Lid)
         .ToDictionary(
@@ -172,20 +174,35 @@ public async Task<IActionResult> CheckReward(int uid)
     var winnersPending = new List<object>();
     var stillNotAnnounced = new List<object>();
 
-    // เติมรายการที่ “ถูกรางวัล (รอรับเงิน)” ที่มีอยู่แล้ว เข้า winnersPending ก่อน
-    winnersPending.AddRange(
-        winnersAlreadyPending.Select(o => new {
-            o.oid, o.lid, o.amount, o.date, status = o.statusbonus
-        })
-    );
+    // 3) เติมรายการที่ “ถูกรางวัล (รอรับเงิน)” ที่มีอยู่แล้ว พร้อม rank
+    foreach (var o in winnersAlreadyPending)
+    {
+        bestRewardByLid.TryGetValue(o.lid, out var rw); // อาจเป็น null หากไม่มีในตาราง reward
+        winnersPending.Add(new
+        {
+            o.oid,
+            o.lid,
+            o.amount,
+            o.date,
+            rank = rw?.Rank ?? "N/A",
+            status = o.statusbonus
+        });
+    }
 
-    // 3) ประมวลผลเฉพาะที่ "ยังไม่ขึ้นรางวัล"
+    // 4) ประมวลผลเฉพาะที่ "ยังไม่ขึ้นรางวัล" → หากถูกรางวัลให้เปลี่ยนเป็น (รอรับเงิน)
+    var updatedCount = 0;
+
     foreach (var po in notMarked)
     {
         if (!bestRewardByLid.TryGetValue(po.lid, out var reward))
         {
-            // ยังไม่ประกาศรางวัลของเลขนี้ → แสดงใน stillNotAnnounced
-            stillNotAnnounced.Add(new { po.oid, po.lid, po.amount, po.date, status = po.statusbonus });
+            // ยังไม่ประกาศผลเลขนี้ → คงสถานะเดิม
+            stillNotAnnounced.Add(new
+            {
+                po.oid, po.lid, po.amount, po.date,
+                rank = "ยังไม่ประกาศ",
+                status = po.statusbonus // "ยังไม่ขึ้นรางวัล"
+            });
             continue;
         }
 
@@ -194,7 +211,7 @@ public async Task<IActionResult> CheckReward(int uid)
 
         if (prizeEach > 0)
         {
-            // อัปเดตเป็น "ถูกรางวัล ... (รอรับเงิน)"
+            // อัปเดตสถานะเป็น "ถูกรางวัล ... (รอรับเงิน)"
             var toUpdate = new Order
             {
                 oid = po.oid,
@@ -204,31 +221,45 @@ public async Task<IActionResult> CheckReward(int uid)
                 date = po.date
             };
             _db.Attach(toUpdate);
-            toUpdate.statusbonus = $"ถูกรางวัล {reward.Rank} ได้ {prizeEach} บาท x {po.amount} = {prizeTotal} (รอรับเงิน)";
-            _db.Entry(toUpdate).Property(x => x.statusbonus).IsModified = true;
 
-            winnersPending.Add(new {
-                toUpdate.oid, toUpdate.lid,
+            toUpdate.statusbonus =
+                $"ถูกรางวัล {reward.Rank} ได้ {prizeEach} บาท x {po.amount} = {prizeTotal} (รอรับเงิน)";
+
+            _db.Entry(toUpdate).Property(x => x.statusbonus).IsModified = true;
+            updatedCount++;
+
+            winnersPending.Add(new
+            {
+                toUpdate.oid,
+                toUpdate.lid,
                 rank = reward.Rank,
-                prizeEach, amount = po.amount, prizeTotal,
+                prizeEach,
+                amount = po.amount,
+                prizeTotal,
                 status = toUpdate.statusbonus
             });
         }
         else
         {
-            // ยังไม่มี/ไม่ถูกรางวัล → คงสถานะ
-            stillNotAnnounced.Add(new { po.oid, po.lid, po.amount, po.date, status = po.statusbonus });
+            // ยังไม่ประกาศ/ไม่ถูกรางวัลในรอบนี้ → แสดงเป็น "ยังไม่ขึ้นรางวัล"
+            stillNotAnnounced.Add(new
+            {
+                po.oid, po.lid, po.amount, po.date,
+                rank = reward.Rank,     // อาจเป็น rank ที่ไม่ได้เงิน เช่น 6 หรือ mapping ไม่เจอ
+                status = po.statusbonus // คง "ยังไม่ขึ้นรางวัล"
+            });
         }
     }
 
-    if (winnersPending.Any(w => w is not null && w.GetType().GetProperty("rank") != null))
-        await _db.SaveChangesAsync(); // เซฟเฉพาะกรณีมีการอัปเดตสถานะใหม่
+    if (updatedCount > 0)
+        await _db.SaveChangesAsync();
 
     return Ok(new
     {
-        message = "เช็คผลสำเร็จ (รวมทั้งรายการรอรับเงินที่มีอยู่แล้ว และที่เพิ่งเจอใหม่)",
-        winnersPending,      // รวมทั้งที่มีอยู่เดิมและที่เพิ่งอัปเดต
-        stillNotAnnounced    // ยังไม่มีผล/ยังไม่ประกาศ
+        message = "เช็คผลสำเร็จ (รวมทั้งรายการรอรับเงินที่มีอยู่แล้ว และที่เพิ่งอัปเดต)",
+        winnersPending,      // ถูกรางวัล + รอรับเงิน (มี rank เสมอ ถ้าหาเจอ)
+        stillNotAnnounced,   // ยังไม่ขึ้นรางวัล (rank = "ยังไม่ประกาศ" หรือ rank จากตาราง)
+        time = DateTime.Now
     });
 }
 
