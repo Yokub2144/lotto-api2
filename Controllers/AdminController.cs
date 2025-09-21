@@ -82,145 +82,123 @@ namespace LottoApi.Controllers
             return Ok(new { message = "Reward added successfully.", reward = newReward });
         }
 
-                [HttpPost("random-rewards")]
-            public async Task<IActionResult> RandomRewards()
-            {
-                try
-                {
-                    // 1. ดึงข้อมูลลอตเตอรี่ทั้งหมด
-                    var allLotteries = await _db.Lottery.ToListAsync();
-                    if (allLotteries == null || !allLotteries.Any())
-                    {
-                        return BadRequest("ไม่พบข้อมูลลอตเตอรี่ที่จะทำการสุ่มรางวัล");
-                    }
-
-                    var random = new Random();
-                    var usedLottoIds = new HashSet<int>();
-
-                    // 2. สุ่มรางวัลที่ 1 (rank = "1") - 1 รางวัล
-                    var winnerLotto = allLotteries[random.Next(allLotteries.Count)];
-                    usedLottoIds.Add(winnerLotto.lid);
-                    _db.Reward.Add(new Reward { Lid = winnerLotto.lid, Rank = "1" });
-
-                    // 3. สุ่มรางวัลที่ 2 (rank = "2") - 1 รางวัล
-                    var remainingLotteries = allLotteries.Where(l => !usedLottoIds.Contains(l.lid)).ToList();
-                    if (remainingLotteries.Any())
-                    {
-                        var random2Winner = remainingLotteries[random.Next(remainingLotteries.Count)];
-                        usedLottoIds.Add(random2Winner.lid);
-                        _db.Reward.Add(new Reward { Lid = random2Winner.lid, Rank = "2" });
-                    }
-
-                    // 4. สุ่มรางวัลที่ 3 (rank = "3") - 1 รางวัล
-                    remainingLotteries = allLotteries.Where(l => !usedLottoIds.Contains(l.lid)).ToList();
-                    if (remainingLotteries.Any())
-                    {
-                        var random3Winner = remainingLotteries[random.Next(remainingLotteries.Count)];
-                        usedLottoIds.Add(random3Winner.lid);
-                        _db.Reward.Add(new Reward { Lid = random3Winner.lid, Rank = "3" });
-                    }
-
-                    // 5. สุ่มเลขท้าย 3 ตัว (rank = "4") - 1 รางวัล
-                    string last3Digits = winnerLotto.number.Substring(winnerLotto.number.Length - 3);
-                    var last3WinnersByNumber = allLotteries.Where(l => l.number.EndsWith(last3Digits) && !usedLottoIds.Contains(l.lid)).ToList();
-                    if (last3WinnersByNumber.Any())
-                    {
-                        var last3Winner = last3WinnersByNumber[random.Next(last3WinnersByNumber.Count)];
-                        _db.Reward.Add(new Reward { Lid = last3Winner.lid, Rank = "4" });
-                    }
-
-                    // 6. บันทึกข้อมูลทั้งหมด
-                    await _db.SaveChangesAsync();
-
-                    return Ok(new { message = "Random rewards (1, 2, 3, and last 3 digits) have been generated and saved." });
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, new { message = "An error occurred while generating rewards.", error = ex.Message });
-                }
-            }
-                        [HttpPost("select-reward")]
-            public async Task<IActionResult> SelectReward([FromBody] SelectRewardRequest request)
-            {
-                // 1. ตรวจสอบความถูกต้องของข้อมูล
-                if (string.IsNullOrEmpty(request.Number) || request.Number.Length != 2)
-                {
-                    return BadRequest(new { message = "กรุณากรอกเลขท้าย 2 ตัวให้ถูกต้อง" });
-                }
-                
-                // 2. ค้นหาหมายเลขลอตเตอรี่ที่มีเลขท้าย 2 ตัวที่ตรงกัน
-                var lotteries = await _db.Lottery.Where(l => l.number.EndsWith(request.Number)).ToListAsync();
-                
-                if (lotteries == null || !lotteries.Any())
-                {
-                    return NotFound(new { message = "ไม่พบหมายเลขลอตเตอรี่ที่มีเลขท้าย 2 ตัวที่ระบุ" });
-                }
-
-                // 3. บันทึกข้อมูลรางวัลที่ 5 สำหรับทุกใบที่มีเลขท้ายตรงกัน
-                foreach (var lottery in lotteries)
-                {
-                    var existingReward = await _db.Reward.FirstOrDefaultAsync(r => r.Lid == lottery.lid);
-                    if (existingReward == null) // ตรวจสอบว่ายังไม่เคยได้รับรางวัล
-                    {
-                        _db.Reward.Add(new Reward { Lid = lottery.lid, Rank = "5" });
-                    }
-                }
-
-                // 4. บันทึกข้อมูลลงในฐานข้อมูล
-                await _db.SaveChangesAsync();
-
-                return Ok(new { message = $"บันทึกรางวัลที่ 5 (เลขท้าย 2 ตัว: {request.Number}) สำเร็จ" });
-            }
-
-        [HttpDelete("clear-all-data")]
-        public async Task<IActionResult> ClearAllData()
+        [HttpPost("random-rewards")]
+        public async Task<IActionResult> RandomRewards()
         {
             try
             {
-                // ล้างข้อมูลจากตาราง Reward
-                _db.Reward.RemoveRange(_db.Reward);
-                
-                // ล้างข้อมูลจากตาราง Orders
-                _db.Orders.RemoveRange(_db.Orders);
-                
-                // ล้างข้อมูลจากตาราง Lottery
-                _db.Lottery.RemoveRange(_db.Lottery);
-                
+                // 1. ดึงข้อมูลลอตเตอรี่ทั้งหมด
+                var allLotteries = await _db.Lottery.ToListAsync();
+                if (allLotteries == null || !allLotteries.Any())
+                {
+                    return BadRequest("ไม่พบข้อมูลลอตเตอรี่ที่จะทำการสุ่มรางวัล");
+                }
+
+                var random = new Random();
+                var usedLottoIds = new HashSet<int>();
+
+                // 2. สุ่มรางวัลที่ 1 (rank = "1") - 1 รางวัล
+                var winnerLotto = allLotteries[random.Next(allLotteries.Count)];
+                usedLottoIds.Add(winnerLotto.lid);
+                _db.Reward.Add(new Reward { Lid = winnerLotto.lid, Rank = "1" });
+
+                // 3. สุ่มรางวัลที่ 2 (rank = "2") - 1 รางวัล
+                var remainingLotteries = allLotteries.Where(l => !usedLottoIds.Contains(l.lid)).ToList();
+                if (remainingLotteries.Any())
+                {
+                    var random2Winner = remainingLotteries[random.Next(remainingLotteries.Count)];
+                    usedLottoIds.Add(random2Winner.lid);
+                    _db.Reward.Add(new Reward { Lid = random2Winner.lid, Rank = "2" });
+                }
+
+                // 4. สุ่มรางวัลที่ 3 (rank = "3") - 1 รางวัล
+                remainingLotteries = allLotteries.Where(l => !usedLottoIds.Contains(l.lid)).ToList();
+                if (remainingLotteries.Any())
+                {
+                    var random3Winner = remainingLotteries[random.Next(remainingLotteries.Count)];
+                    usedLottoIds.Add(random3Winner.lid);
+                    _db.Reward.Add(new Reward { Lid = random3Winner.lid, Rank = "3" });
+                }
+
+                // 5. สุ่มเลขท้าย 3 ตัว (rank = "4") - 1 รางวัล
+                string last3Digits = winnerLotto.number.Substring(winnerLotto.number.Length - 3);
+                var last3WinnersByNumber = allLotteries.Where(l => l.number.EndsWith(last3Digits) && !usedLottoIds.Contains(l.lid)).ToList();
+                if (last3WinnersByNumber.Any())
+                {
+                    var last3Winner = last3WinnersByNumber[random.Next(last3WinnersByNumber.Count)];
+                    _db.Reward.Add(new Reward { Lid = last3Winner.lid, Rank = "4" });
+                }
+
+                // 6. บันทึกข้อมูลทั้งหมด
                 await _db.SaveChangesAsync();
-                
-                return Ok(new { message = "All data (Lottery, Orders, Rewards) has been successfully cleared." });
+
+                return Ok(new { message = "Random rewards (1, 2, 3, and last 3 digits) have been generated and saved." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while clearing data.", error = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while generating rewards.", error = ex.Message });
             }
         }
+        [HttpPost("select-reward")]
+        public async Task<IActionResult> SelectReward([FromBody] SelectRewardRequest request)
+        {
+            // 1. ตรวจสอบความถูกต้องของข้อมูล
+            if (string.IsNullOrEmpty(request.Number) || request.Number.Length != 2)
+            {
+                return BadRequest(new { message = "กรุณากรอกเลขท้าย 2 ตัวให้ถูกต้อง" });
+            }
+
+            // 2. ค้นหาหมายเลขลอตเตอรี่ที่มีเลขท้าย 2 ตัวที่ตรงกัน
+            var lotteries = await _db.Lottery.Where(l => l.number.EndsWith(request.Number)).ToListAsync();
+
+            if (lotteries == null || !lotteries.Any())
+            {
+                return NotFound(new { message = "ไม่พบหมายเลขลอตเตอรี่ที่มีเลขท้าย 2 ตัวที่ระบุ" });
+            }
+
+            // 3. บันทึกข้อมูลรางวัลที่ 5 สำหรับทุกใบที่มีเลขท้ายตรงกัน
+            foreach (var lottery in lotteries)
+            {
+                var existingReward = await _db.Reward.FirstOrDefaultAsync(r => r.Lid == lottery.lid);
+                if (existingReward == null) // ตรวจสอบว่ายังไม่เคยได้รับรางวัล
+                {
+                    _db.Reward.Add(new Reward { Lid = lottery.lid, Rank = "5" });
+                }
+            }
+
+            // 4. บันทึกข้อมูลลงในฐานข้อมูล
+            await _db.SaveChangesAsync();
+
+            return Ok(new { message = $"บันทึกรางวัลที่ 5 (เลขท้าย 2 ตัว: {request.Number}) สำเร็จ" });
+        }
+
+        
         [HttpGet("showrank")]
         public async Task<IActionResult> ShowRank()
         {
-                var winningLotteries = await _db.Lottery
-                    .Join(
-                        _db.Reward,
-                        lottery => lottery.lid, 
-                        reward => reward.Lid,    
-                        (lottery, reward) => new Lotteryreward
-                        {
-                            lid = lottery.lid,
-                            number = lottery.number,
-                            rank = reward.Rank
-                        }
-                    )
-                    // เปลี่ยน r.Rank เป็น r.rank
-                    .Where(r => r.rank != null)
-                    .ToListAsync();
+            var winningLotteries = await _db.Lottery
+                .Join(
+                    _db.Reward,
+                    lottery => lottery.lid,
+                    reward => reward.Lid,
+                    (lottery, reward) => new Lotteryreward
+                    {
+                        lid = lottery.lid,
+                        number = lottery.number,
+                        rank = reward.Rank
+                    }
+                )
+                // เปลี่ยน r.Rank เป็น r.rank
+                .Where(r => r.rank != null)
+                .ToListAsync();
 
-                if (!winningLotteries.Any())
-                {
-                    return NotFound("No winning lotteries found.");
-                }
-
-                return Ok(winningLotteries);
+            if (!winningLotteries.Any())
+            {
+                return NotFound("No winning lotteries found.");
             }
+
+            return Ok(winningLotteries);
+        }
         [HttpGet("reward-lotto")]
         public async Task<IActionResult> GetRewardWithLotto()
         {
@@ -246,6 +224,43 @@ namespace LottoApi.Controllers
 
             return Ok(data);
         }
-                }
+        
+[HttpDelete("clear-all")]
+public async Task<IActionResult> ClearAllData()
+{
+    using var tx = await _db.Database.BeginTransactionAsync();
 
+    // 1) ลบ Orders (FK -> Lottery, User)
+    _db.Orders.RemoveRange(_db.Orders);
+    await _db.SaveChangesAsync();
+
+    // 2) ลบ Reward (FK -> Lottery)
+    _db.Reward.RemoveRange(_db.Reward);
+    await _db.SaveChangesAsync();
+
+    // 3) ลบ Wallet ที่ไม่ใช่ของ admin (FK -> User)
+    var walletsToDelete = await _db.Wallet
+        .Where(w => !_db.User.Any(u => u.uid == w.uid && u.role == "admin"))
+        .ToListAsync();
+    _db.Wallet.RemoveRange(walletsToDelete);
+    await _db.SaveChangesAsync();
+
+    // 4) ลบ Lottery (ตอนนี้ไม่มี Reward อ้างแล้ว)
+    _db.Lottery.RemoveRange(_db.Lottery);
+    await _db.SaveChangesAsync();
+
+    // 5) ลบ User ที่ไม่ใช่ admin (Wallet ถูกลบไปแล้ว)
+    var usersToDelete = await _db.User.Where(u => u.role != "admin").ToListAsync();
+    _db.User.RemoveRange(usersToDelete);
+    await _db.SaveChangesAsync();
+
+    await tx.CommitAsync();
+
+    return Ok(new { message = "ลบข้อมูลเรียบร้อย (ยกเว้น admin)" });
+}
+
+
+    }
+                
+    
 }
