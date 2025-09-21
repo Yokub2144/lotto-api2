@@ -38,7 +38,7 @@ namespace LottoApi.Controllers
 
             var newLotto = new Lottery
             {
-                uid = 1,
+                uid = 3,
                 price = request.Price,
                 number = request.Number,
                 start_date = DateOnly.FromDateTime(request.StartDate),
