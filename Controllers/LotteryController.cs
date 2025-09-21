@@ -95,6 +95,7 @@ public class LotteryController : ControllerBase
 
         return Ok(list);
     }
+<<<<<<< HEAD
     [HttpGet("getreward")]
     public async Task<IActionResult> GetReward()
     {
@@ -118,4 +119,165 @@ public class LotteryController : ControllerBase
             return StatusCode(500, new { message = ex.Message });
         }
     }
+=======
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class RewardController : ControllerBase
+    {
+        // mock data จำลอง
+        private static readonly List<Lotteryreward> rewards = new()
+        {
+            new Lotteryreward { lid = 1, number = "123456", rank = "1" },
+            new Lotteryreward { lid = 2, number = "234567", rank = "2" },
+            new Lotteryreward { lid = 3, number = "345678", rank = "3" },
+            new Lotteryreward { lid = 4, number = "456789", rank = "4" },
+            new Lotteryreward { lid = 5, number = "567890", rank = "5" }
+        };
+
+        [HttpGet]
+        public IActionResult GetAllRewards()
+        {
+            return Ok(rewards);
+        }
+
+        [HttpGet("{rank}")]
+        public IActionResult GetRewardByRank(string rank)
+        {
+            var reward = rewards.Find(r => r.rank == rank);
+            if (reward == null) return NotFound("ไม่พบรางวัล");
+            return Ok(new
+            {
+                reward.number,
+                reward.rank,
+            });
+        }
+    }
+   [HttpPost("check/{uid:int}")]
+public async Task<IActionResult> CheckReward(int uid)
+{
+    var orders = await _db.Orders
+        .Where(o => o.uid == uid && o.statusbonus == "ยังไม่ขึ้นรางวัล")
+        .ToListAsync();
+
+    if (orders.Count == 0)
+        return Ok(new { message = "ไม่มีออเดอร์ที่รอเช็คผล" });
+
+    // ✅ เลือก “รางวัลดีที่สุด” ต่อ lid
+    var rewards = await _db.Reward.AsNoTracking().ToListAsync();
+    var bestRewardByLid = rewards
+        .GroupBy(r => r.Lid)
+        .ToDictionary(
+            g => g.Key,
+            g => g.OrderBy(r =>
+                int.TryParse(r.Rank, out var n) ? n : int.MaxValue
+            ).First()
+        );
+
+    var winners = new List<object>();
+    var losers  = new List<int>();
+
+    foreach (var o in orders)
+    {
+        if (!bestRewardByLid.TryGetValue(o.lid, out var reward))
+            continue; // ยังไม่ประกาศเลขนี้
+
+        var prizeEach = RewardHelper.PrizeByRank(reward.Rank);
+        var prizeTotal = prizeEach * o.amount;
+
+        if (prizeEach > 0)
+        {
+            o.statusbonus = $"ถูกรางวัล {prizeEach} บาท x {o.amount} = {prizeTotal} (รอรับเงิน)";
+            winners.Add(new { o.oid, o.lid, reward.Rank, prizeEach, o.amount, prizeTotal });
+        }
+        else
+        {
+            o.statusbonus = "ไม่ถูกรางวัล";
+            losers.Add(o.oid);
+        }
+    }
+
+    await _db.SaveChangesAsync();
+
+    return Ok(new { message = "อัปเดตผลรางวัลแล้ว (ยังไม่จ่ายเงิน)", winners, losers });
+}
+
+
+[HttpPost("claim/{oid:int}")]
+public async Task<IActionResult> Claim(int oid)
+{
+    var o = await _db.Orders.FirstOrDefaultAsync(x => x.oid == oid);
+    if (o is null) return NotFound(new { message = "ไม่พบออเดอร์" });
+
+    if (o.statusbonus.Contains("จ่ายแล้ว"))
+        return BadRequest(new { message = "ออเดอร์นี้รับรางวัลไปแล้ว" });
+    if (!o.statusbonus.Contains("(รอรับเงิน)"))
+        return BadRequest(new { message = "ออเดอร์นี้ยังไม่อยู่ในสถานะรอรับเงิน" });
+
+    var reward = await _db.Reward.FirstOrDefaultAsync(r => r.Lid == o.lid);
+    if (reward is null) return BadRequest(new { message = "ไม่พบข้อมูลรางวัลของเลขนี้" });
+
+    var prizeEach = RewardHelper.PrizeByRank(reward.Rank);
+    if (prizeEach <= 0) return BadRequest(new { message = "ออเดอร์นี้ไม่ถูกรางวัล" });
+
+    var wallet = await _db.Wallet.FirstOrDefaultAsync(w => w.uid == o.uid);
+    if (wallet is null) return NotFound(new { message = "ไม่พบ Wallet ของลูกค้า" });
+
+    var prizeTotal = prizeEach * o.amount;
+
+    using var tx = await _db.Database.BeginTransactionAsync();
+    wallet.money += prizeTotal;
+    o.statusbonus = $"จ่ายแล้ว {prizeEach} บาท x {o.amount} = {prizeTotal}";
+    await _db.SaveChangesAsync();
+    await tx.CommitAsync();
+
+    return Ok(new { message = "จ่ายรางวัลสำเร็จ", order = new { o.oid, o.lid, o.statusbonus }, balance = wallet.money });
+}
+
+
+[HttpPost("claim-all/{uid:int}")]
+public async Task<IActionResult> ClaimAll(int uid)
+{
+    var pending = await _db.Orders
+        .Where(o => o.uid == uid && o.statusbonus.Contains("(รอรับเงิน)"))
+        .ToListAsync();
+
+    if (pending.Count == 0)
+        return Ok(new { message = "ไม่มีรายการรอรับเงิน" });
+
+    var rewardsByLid = await _db.Reward
+        .AsNoTracking()
+        .ToDictionaryAsync(r => r.Lid, r => r.Rank);
+
+    var wallet = await _db.Wallet.FirstOrDefaultAsync(w => w.uid == uid);
+    if (wallet is null) return NotFound(new { message = "ไม่พบ Wallet ของลูกค้า" });
+
+    var paid = new List<object>();
+
+    using var tx = await _db.Database.BeginTransactionAsync();
+
+    foreach (var o in pending)
+    {
+        if (!rewardsByLid.TryGetValue(o.lid, out var rank))
+            continue;
+
+        var prizeEach  = RewardHelper.PrizeByRank(rank);
+        if (prizeEach <= 0) continue;
+
+        var prizeTotal = prizeEach * o.amount;
+
+        wallet.money += prizeTotal;
+        o.statusbonus = $"จ่ายแล้ว {prizeEach} บาท x {o.amount} = {prizeTotal}";
+
+        paid.Add(new { o.oid, o.lid, rank, prizeEach, o.amount, prizeTotal });
+    }
+
+    await _db.SaveChangesAsync();
+    await tx.CommitAsync();
+
+    return Ok(new { message = "จ่ายรางวัลทั้งหมดสำเร็จ", paid, balance = wallet.money });
+}
+
+
+>>>>>>> c66a62e29eb2f042f3c4b2ac7a1fc22f79152c99
 }

@@ -171,6 +171,30 @@ namespace LottoApi.Controllers
 
                 return Ok(new { message = $"บันทึกรางวัลที่ 5 (เลขท้าย 2 ตัว: {request.Number}) สำเร็จ" });
             }
+
+        [HttpDelete("clear-all-data")]
+        public async Task<IActionResult> ClearAllData()
+        {
+            try
+            {
+                // ล้างข้อมูลจากตาราง Reward
+                _db.Reward.RemoveRange(_db.Reward);
+                
+                // ล้างข้อมูลจากตาราง Orders
+                _db.Orders.RemoveRange(_db.Orders);
+                
+                // ล้างข้อมูลจากตาราง Lottery
+                _db.Lottery.RemoveRange(_db.Lottery);
+                
+                await _db.SaveChangesAsync();
+                
+                return Ok(new { message = "All data (Lottery, Orders, Rewards) has been successfully cleared." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while clearing data.", error = ex.Message });
+            }
+        }
           [HttpGet("showrank")]
 public async Task<IActionResult> ShowRank()
 {
