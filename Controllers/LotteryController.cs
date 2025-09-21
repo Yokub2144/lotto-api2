@@ -95,4 +95,27 @@ public class LotteryController : ControllerBase
 
         return Ok(list);
     }
+    [HttpGet("getreward")]
+    public async Task<IActionResult> GetReward()
+    {
+        try
+        {
+            // ดึงข้อมูลทั้งหมดจากตาราง Reward
+            var rewards = await _db.Reward
+                .OrderBy(r => r.Rank)
+                .Select(r => new
+                {
+                    r.Rid,
+                    r.Lid,
+                    r.Rank
+                })
+                .ToListAsync();
+
+            return Ok(rewards);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 }
