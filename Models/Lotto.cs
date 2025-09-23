@@ -37,7 +37,7 @@ namespace LottoApi.Models
     {
         public static int PrizeByRank(string rank) => rank switch
         {
-            "1" => 6000000,
+            "1" => 6040000,
             "2" => 200000,
             "3" => 80000,
             "4" => 40000,
