@@ -177,18 +177,23 @@ namespace LottoApi.Controllers
         {
             try
             {
-                _db.Orders.RemoveRange(_db.Orders);
-                _db.Reward.RemoveRange(_db.Reward);
-                _db.Lottery.RemoveRange(_db.Lottery);
-                await _db.SaveChangesAsync();
+                await _db.Orders.ExecuteDeleteAsync();
+                await _db.Reward.ExecuteDeleteAsync();
+                await _db.Lottery.ExecuteDeleteAsync();
 
                 return Ok(new { message = "All data (Lottery, Orders, Rewards) has been successfully cleared." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while clearing data.", error = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while clearing data.",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
             }
         }
+
         [HttpGet("showrank")]
         public async Task<IActionResult> ShowRank()
         {
