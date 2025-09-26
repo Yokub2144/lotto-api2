@@ -128,50 +128,13 @@ public class LotteryController : ControllerBase
             });
         }
     }
-   [HttpPost("check/{uid:int}")]
-public async Task<IActionResult> CheckReward(int uid)
-{
-    // ดึงออเดอร์ของผู้ใช้ที่ "ยังไม่ขึ้นรางวัล" หรือ "ถูกรางวัล (รอรับเงิน)" อยู่แล้ว
-    var candidateOrders = await _db.Orders
-        .AsNoTracking()
-        .Where(o => o.uid == uid &&
-               (o.statusbonus == "ยังไม่ขึ้นรางวัล" || o.statusbonus.Contains("(รอรับเงิน)")))
-        .OrderByDescending(o => o.date)
-        .ToListAsync();
-
-    if (candidateOrders.Count == 0)
-        return Ok(Array.Empty<object>());
-
-    // กลุ่มย่อย
-    var notMarked = candidateOrders.Where(o => o.statusbonus == "ยังไม่ขึ้นรางวัล").ToList();
-    var alreadyPending = candidateOrders.Where(o => o.statusbonus.Contains("(รอรับเงิน)")).ToList();
-
-    // โหลด reward เฉพาะ lid ที่เกี่ยวข้องทั้งหมด
-    var lidsAll = candidateOrders.Select(o => o.lid).Distinct().ToList();
-    var rewards = await _db.Reward
-        .AsNoTracking()
-        .Where(r => lidsAll.Contains(r.Lid))
-        .ToListAsync();
-
-    // ถ้าหนึ่ง lid มีหลายอันดับ → เลือกอันดับดีที่สุด (เลขน้อยสุด = รางวัลสูงสุด)
-    var bestRewardByLid = rewards
-        .GroupBy(r => r.Lid)
-        .ToDictionary(
-            g => g.Key,
-            g => g.OrderBy(r => int.TryParse(r.Rank, out var n) ? n : int.MaxValue).First()
-        );
-
-    var winners = new List<object>();
-    var updatedCount = 0;
-
-    // 1) เติมรายการที่ "ถูกรางวัล (รอรับเงิน)" อยู่แล้ว
-    foreach (var o in alreadyPending)
+    [HttpPost("check/{uid:int}")]
+    public async Task<IActionResult> CheckReward(int uid)
     {
-        if (!bestRewardByLid.TryGetValue(o.lid, out var rw)) continue; // กันกรณีไม่มีแถวใน reward
-        var prizeEach  = RewardHelper.PrizeByRank(rw.Rank);
-        if (prizeEach <= 0) continue;
+        var orders = await _db.Orders
+            .Where(o => o.uid == uid && o.statusbonus == "ยังไม่ขึ้นรางวัล")
+            .ToListAsync();
 
-<<<<<<< HEAD
         if (orders.Count == 0)
             return Ok(new { message = "ไม่มีออเดอร์ที่รอเช็คผล" });
 
@@ -199,26 +162,10 @@ public async Task<IActionResult> CheckReward(int uid)
 
             var lottery = lotteries.FirstOrDefault(l => l.lid == o.lid);
             var lotteryNumber = lottery?.number;
-=======
-        var prizeTotal = prizeEach * o.amount;
-        winners.Add(new
-        {
-            o.oid,
-            o.lid,
-            rank = rw.Rank,
-            prizeEach,
-            amount = o.amount,
-            prizeTotal
-        });
-    }
->>>>>>> 9cccb3a36762ec20a9e97c4c63bc281a84053666
 
-    // 2) ประมวลผลเฉพาะที่ "ยังไม่ขึ้นรางวัล" → ถ้าถูกรางวัลให้ mark และใส่ผลลัพธ์
-    foreach (var po in notMarked)
-    {
-        if (!bestRewardByLid.TryGetValue(po.lid, out var rw)) continue; // ยังไม่ประกาศผลเลขนี้
+            var prizeEach = RewardHelper.PrizeByRank(reward.Rank);
+            var prizeTotal = prizeEach * o.amount;
 
-<<<<<<< HEAD
             if (prizeEach > 0)
             {
                 o.statusbonus = $"ถูกรางวัล {prizeEach} บาท x {o.amount} = {prizeTotal} (รอรับเงิน)";
@@ -239,46 +186,11 @@ public async Task<IActionResult> CheckReward(int uid)
                 losers.Add(o.oid);
             }
         }
-=======
-        var prizeEach = RewardHelper.PrizeByRank(rw.Rank);
-        if (prizeEach <= 0) continue; // ไม่ใช่อันดับที่ได้รางวัลเป็นเงิน
->>>>>>> 9cccb3a36762ec20a9e97c4c63bc281a84053666
 
-        var prizeTotal = prizeEach * po.amount;
-
-        // อัปเดต statusbonus เป็น “ถูกรางวัล … (รอรับเงิน)”
-        var toUpdate = new Order
-        {
-            oid = po.oid,
-            uid = po.uid,
-            lid = po.lid,
-            amount = po.amount,
-            date = po.date
-        };
-        _db.Attach(toUpdate);
-        toUpdate.statusbonus = $"ถูกรางวัล {rw.Rank} ได้ {prizeEach} บาท x {po.amount} = {prizeTotal} (รอรับเงิน)";
-        _db.Entry(toUpdate).Property(x => x.statusbonus).IsModified = true;
-        updatedCount++;
-
-        winners.Add(new
-        {
-            toUpdate.oid,
-            toUpdate.lid,
-            rank = rw.Rank,
-            prizeEach,
-            amount = po.amount,
-            prizeTotal
-        });
-    }
-
-    if (updatedCount > 0)
         await _db.SaveChangesAsync();
 
-    // ส่งกลับเฉพาะ “ถูกรางวัล” ทั้งที่มีอยู่แล้วและที่เพิ่งเจอใหม่
-    return Ok(winners);
-}
-
-
+        return Ok(new { message = "อัปเดตผลรางวัลแล้ว (ยังไม่จ่ายเงิน)", winners, losers });
+    }
 
 
     [HttpPost("claim/{oid:int}")]
