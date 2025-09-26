@@ -138,18 +138,13 @@ public class LotteryController : ControllerBase
         if (orders.Count == 0)
             return Ok(new { message = "ไม่มีออเดอร์ที่รอเช็คผล" });
 
-
+        // ✅ เลือก “รางวัลดีที่สุด” ต่อ lid
         var rewards = await _db.Reward.AsNoTracking().ToListAsync();
-        var lotteries = await _db.Lottery.AsNoTracking().ToListAsync();
-
-
         var bestRewardByLid = rewards
             .GroupBy(r => r.Lid)
             .ToDictionary(
                 g => g.Key,
-                g => g.OrderBy(r =>
-                    int.TryParse(r.Rank, out var n) ? n : int.MaxValue
-                ).First()
+                g => g.OrderBy(r => int.TryParse(r.Rank, out var n) ? n : int.MaxValue).First()
             );
 
         var winners = new List<object>();
@@ -158,10 +153,7 @@ public class LotteryController : ControllerBase
         foreach (var o in orders)
         {
             if (!bestRewardByLid.TryGetValue(o.lid, out var reward))
-                continue;
-
-            var lottery = lotteries.FirstOrDefault(l => l.lid == o.lid);
-            var lotteryNumber = lottery?.number;
+                continue; // ยังไม่ประกาศเลขนี้
 
             var prizeEach = RewardHelper.PrizeByRank(reward.Rank);
             var prizeTotal = prizeEach * o.amount;
@@ -169,16 +161,7 @@ public class LotteryController : ControllerBase
             if (prizeEach > 0)
             {
                 o.statusbonus = $"ถูกรางวัล {prizeEach} บาท x {o.amount} = {prizeTotal} (รอรับเงิน)";
-                winners.Add(new
-                {
-                    o.oid,
-                    o.lid,
-                    LotteryNumber = lotteryNumber,
-                    reward.Rank,
-                    prizeEach,
-                    o.amount,
-                    prizeTotal
-                });
+                winners.Add(new { o.oid, o.lid, reward.Rank, prizeEach, o.amount, prizeTotal });
             }
             else
             {
