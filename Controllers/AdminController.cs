@@ -61,7 +61,6 @@ namespace LottoApi.Controllers
 
             return Ok(response);
         }
-
         [HttpPost("addreward")]
         public async Task<IActionResult> Admin_create_reward([FromBody] Reward_req request)
         {
