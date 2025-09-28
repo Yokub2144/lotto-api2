@@ -5264,11 +5264,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\LottoApi\\LottoApi.csproj",
+      "projectUniqueName": "C:\\LottoApi2\\LottoApi.csproj",
       "projectName": "LottoApi",
-      "projectPath": "C:\\LottoApi\\LottoApi.csproj",
+      "projectPath": "C:\\LottoApi2\\LottoApi.csproj",
       "packagesPath": "C:\\Users\\suwat\\.nuget\\packages\\",
-      "outputPath": "C:\\LottoApi\\obj\\",
+      "outputPath": "C:\\LottoApi2\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

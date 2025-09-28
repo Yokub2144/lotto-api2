@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "cw71gMLCNcM=",
+  "dgSpecHash": "Z7YdKd96u5w=",
   "success": true,
-  "projectFilePath": "C:\\LottoApi\\LottoApi.csproj",
+  "projectFilePath": "C:\\LottoApi2\\LottoApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\suwat\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\suwat\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

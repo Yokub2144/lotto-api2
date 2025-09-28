@@ -43,6 +43,8 @@ namespace LottoApi.Models
             "4" => 40000,
             "5" => 20000,
             _ => 0
+
+            
         };
     }
 }
